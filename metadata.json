@@ -1,0 +1,5 @@
+{
+  "name": "TBS Slip Generator",
+  "description": "Aplikasi input data untuk pembuatan Slip Pembelian Tandan Buah Segar (TBS) dengan kalkulasi otomatis.",
+  "requestFramePermissions": []
+}
