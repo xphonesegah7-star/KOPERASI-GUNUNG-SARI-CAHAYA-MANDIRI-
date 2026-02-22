@@ -58,6 +58,7 @@ interface AppSettings {
   slipAddress: string;
   slipPhone: string;
   logoUrl: string | null;
+  logoSize: number;
   backgroundImageUrl: string | null;
 }
 
@@ -73,6 +74,7 @@ export default function App() {
     slipAddress: '',
     slipPhone: '',
     logoUrl: null,
+    logoSize: 64,
     backgroundImageUrl: null
   });
   
@@ -193,6 +195,20 @@ export default function App() {
   const removeEntry = (id: string) => {
     if (entries.length > 1) {
       setEntries(entries.filter((e) => e.id !== id));
+    }
+  };
+
+  const resetForm = () => {
+    if (confirm('Apakah Anda yakin ingin mengosongkan form dan membuat data baru?')) {
+      setRecipientName(settings.defaultRecipientName);
+      setBuyerName(settings.defaultBuyerName);
+      setMonth(format(new Date(), 'MMMM'));
+      setEntries([
+        { id: '1', date: format(new Date(), 'yyyy-MM-dd'), pricePerKg: 3010, weight: 0 },
+      ]);
+      setJasaMobil(0);
+      setPinjamanPribadi(0);
+      setCashDp(0);
     }
   };
 
@@ -338,6 +354,14 @@ export default function App() {
 
           <div className="flex items-center gap-3">
             <button 
+              onClick={resetForm}
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors text-slate-600"
+              title="Input Data Baru"
+            >
+              <Plus size={16} />
+              <span className="hidden sm:inline">Data Baru</span>
+            </button>
+            <button 
               onClick={saveToHistory}
               className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors"
             >
@@ -446,7 +470,12 @@ export default function App() {
                       <div className="flex items-center gap-4">
                         {settings.logoUrl ? (
                           <div className="relative group">
-                            <img src={settings.logoUrl} alt="Logo" className="w-16 h-16 object-contain border border-slate-200 rounded-lg p-1 bg-white" />
+                            <img 
+                              src={settings.logoUrl} 
+                              alt="Logo" 
+                              className="object-contain border border-slate-200 rounded-lg p-1 bg-white" 
+                              style={{ width: '64px', height: '64px' }}
+                            />
                             <button 
                               onClick={() => updateSettings({ ...settings, logoUrl: null })}
                               className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -467,6 +496,24 @@ export default function App() {
                         </label>
                       </div>
                     </div>
+
+                    {settings.logoUrl && (
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <label className="text-xs font-bold text-slate-500 uppercase">Ukuran Logo</label>
+                          <span className="text-xs font-bold text-slate-400">{settings.logoSize}px</span>
+                        </div>
+                        <input 
+                          type="range" 
+                          min="32" 
+                          max="128" 
+                          step="4"
+                          value={settings.logoSize}
+                          onChange={(e) => updateSettings({ ...settings, logoSize: parseInt(e.target.value) })}
+                          className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-emerald-600"
+                        />
+                      </div>
+                    )}
                   </div>
                 </section>
 
@@ -833,7 +880,7 @@ export default function App() {
               {/* Preview Modal */}
               <AnimatePresence>
                 {showPreview && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8">
+                  <div className="fixed inset-0 z-50 flex items-start justify-center p-4 md:p-8">
                     <motion.div 
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
@@ -874,7 +921,12 @@ export default function App() {
                           {/* Header */}
                           <div className="border-b border-black flex items-center px-4 py-2 gap-4">
                             {settings.logoUrl && (
-                              <img src={settings.logoUrl} alt="Logo" className="w-16 h-16 object-contain" />
+                              <img 
+                                src={settings.logoUrl} 
+                                alt="Logo" 
+                                className="object-contain" 
+                                style={{ width: `${settings.logoSize}px`, height: `${settings.logoSize}px` }}
+                              />
                             )}
                             <div className="flex-1 text-center">
                               <div className="font-serif text-xl tracking-widest uppercase font-bold">
