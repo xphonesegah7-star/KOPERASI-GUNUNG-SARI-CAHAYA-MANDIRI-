@@ -60,6 +60,7 @@ interface AppSettings {
   logoUrl: string | null;
   logoSize: number;
   backgroundImageUrl: string | null;
+  doublePrint: boolean;
 }
 
 export default function App() {
@@ -75,7 +76,8 @@ export default function App() {
     slipPhone: '',
     logoUrl: null,
     logoSize: 64,
-    backgroundImageUrl: null
+    backgroundImageUrl: null,
+    doublePrint: true
   });
   
   const [recipientName, setRecipientName] = useState(settings.defaultRecipientName);
@@ -514,6 +516,24 @@ export default function App() {
                         />
                       </div>
                     )}
+
+                    <div className="pt-4 border-t border-slate-100">
+                      <label className="flex items-center justify-between cursor-pointer group">
+                        <div className="space-y-0.5">
+                          <p className="text-xs font-bold text-slate-700 uppercase">Print Ganda</p>
+                          <p className="text-[10px] text-slate-400">Cetak 2 slip dalam satu halaman (Atas & Bawah)</p>
+                        </div>
+                        <div className="relative inline-flex items-center cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            checked={settings.doublePrint}
+                            onChange={(e) => updateSettings({ ...settings, doublePrint: e.target.checked })}
+                            className="sr-only peer"
+                          />
+                          <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                        </div>
+                      </label>
+                    </div>
                   </div>
                 </section>
 
@@ -917,143 +937,155 @@ export default function App() {
                       </div>
                       
                       <div className="p-6 overflow-y-auto bg-slate-50 flex justify-center">
-                        <div id="slip-preview" className="bg-[#C5D99F] text-black border-2 border-black p-0 overflow-hidden shadow-sm w-full max-w-[210mm]">
-                          {/* Header */}
-                          <div className="border-b border-black flex items-center px-4 py-2 gap-4">
-                            {settings.logoUrl && (
-                              <img 
-                                src={settings.logoUrl} 
-                                alt="Logo" 
-                                className="object-contain" 
-                                style={{ width: `${settings.logoSize}px`, height: `${settings.logoSize}px` }}
-                              />
-                            )}
-                            <div className="flex-1 text-center">
-                              <div className="font-serif text-xl tracking-widest uppercase font-bold">
-                                {settings.slipHeader}
-                              </div>
-                              {(settings.slipAddress || settings.slipPhone) && (
-                                <div className="text-[10px] mt-1 font-medium">
-                                  {settings.slipAddress} {settings.slipPhone && `| Telp: ${settings.slipPhone}`}
+                        <div id="slip-preview" className="w-full max-w-[210mm] space-y-8">
+                          {[1, ...(settings.doublePrint ? [2] : [])].map((copyNum, idx) => (
+                            <div key={copyNum} className={cn(
+                              "bg-[#C5D99F] text-black border-2 border-black p-0 overflow-hidden shadow-sm relative",
+                              idx > 0 && "mt-8 border-t-2 border-dashed border-black pt-8"
+                            )}>
+                              {idx > 0 && (
+                                <div className="absolute top-0 left-0 right-0 flex items-center justify-center -translate-y-1/2 print:hidden">
+                                  <div className="bg-white px-3 py-1 rounded-full text-[10px] font-bold text-slate-400 border border-slate-200 uppercase tracking-widest">Gunting Disini</div>
                                 </div>
                               )}
-                            </div>
-                          </div>
-                          
-                          <div className="grid grid-cols-2 border-b border-black">
-                            <div className="p-4 space-y-1 border-r border-black">
-                              <div className="text-sm">Penjualan Tandan Buah Segar (TBS)</div>
-                              <div className="text-sm">Bulan {month}</div>
-                            </div>
-                            <div className="p-4 flex flex-col items-center justify-center">
-                              <div className="text-[10px] uppercase tracking-tighter mb-2 font-bold">PENERIMA</div>
-                              <div className="flex items-baseline gap-4 w-full">
-                                <span className="text-sm">Nama</span>
-                                <span className="text-sm">:</span>
-                                <span className="text-lg font-bold italic font-serif uppercase flex-1 text-center">{recipientName}</span>
+                              {/* Header */}
+                              <div className="border-b border-black flex items-center px-4 py-2 gap-4">
+                                {settings.logoUrl && (
+                                  <img 
+                                    src={settings.logoUrl} 
+                                    alt="Logo" 
+                                    className="object-contain" 
+                                    style={{ width: `${settings.logoSize}px`, height: `${settings.logoSize}px` }}
+                                  />
+                                )}
+                                <div className="flex-1 text-center">
+                                  <div className="font-serif text-xl tracking-widest uppercase font-bold">
+                                    {settings.slipHeader}
+                                  </div>
+                                  {(settings.slipAddress || settings.slipPhone) && (
+                                    <div className="text-[10px] mt-1 font-medium">
+                                      {settings.slipAddress} {settings.slipPhone && `| Telp: ${settings.slipPhone}`}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          </div>
-
-                          {/* Table */}
-                          <table className="w-full border-collapse text-xs">
-                            <thead>
-                              <tr className="border-b border-black">
-                                <th className="border-r border-black p-1 font-bold w-8">No.</th>
-                                <th className="border-r border-black p-1 font-bold">Jenis Kegiatan</th>
-                                <th className="border-r border-black p-1 font-bold w-24">Tanggal</th>
-                                <th className="border-r border-black p-1 font-bold w-28">Harga Rp / kg</th>
-                                <th className="border-r border-black p-1 font-bold w-24">Ton / Kg</th>
-                                <th className="p-1 font-bold text-right pr-4">Total</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {entries.map((entry, idx) => (
-                                <tr key={entry.id} className="border-b border-black/20">
-                                  <td className="border-r border-black p-1 text-center align-top">{idx === 0 ? '1' : ''}</td>
-                                  <td className="border-r border-black p-1 align-top">{idx === 0 ? 'Tandan Buah Segar (TBS)' : ''}</td>
-                                  <td className="border-r border-black p-1 text-center">{format(new Date(entry.date), 'dd/MM/yyyy')}</td>
-                                  <td className="border-r border-black p-1">
-                                    <div className="flex justify-end px-1">
-                                      <span>{formatCurrency(entry.pricePerKg)}</span>
-                                    </div>
-                                  </td>
-                                  <td className="border-r border-black p-1 text-center">{formatWeight(entry.weight)}</td>
-                                  <td className="p-1 text-right pr-4">
-                                    <div className="flex justify-end px-1">
-                                      <span>{formatCurrency(entry.pricePerKg * (entry.weight * 1000))}</span>
-                                    </div>
-                                  </td>
-                                </tr>
-                              ))}
                               
-                              {/* Summary Rows */}
-                              <tr className="border-t border-black font-bold">
-                                <td colSpan={2} rowSpan={6} className="border-r border-black p-4 align-bottom text-center">
-                                  <div className="mb-12">Pembeli TBS</div>
-                                  <div className="underline font-bold">{buyerName}</div>
-                                </td>
-                                <td className="border-r border-black p-1 text-center uppercase">SUB TOTAL</td>
-                                <td className="border-r border-black p-1"></td>
-                                <td className="border-r border-black p-1 text-center">{formatWeight(totals.totalWeight)}</td>
-                                <td className="p-1 text-right pr-4">
-                                  <div className="flex justify-end px-1">
-                                    <span>{formatCurrency(totals.subTotal)}</span>
+                              <div className="grid grid-cols-2 border-b border-black">
+                                <div className="p-4 space-y-1 border-r border-black">
+                                  <div className="text-sm">Penjualan Tandan Buah Segar (TBS)</div>
+                                  <div className="text-sm">Bulan {month}</div>
+                                </div>
+                                <div className="p-4 flex flex-col items-center justify-center">
+                                  <div className="text-[10px] uppercase tracking-tighter mb-2 font-bold">PENERIMA</div>
+                                  <div className="flex items-baseline gap-4 w-full">
+                                    <span className="text-sm">Nama</span>
+                                    <span className="text-sm">:</span>
+                                    <span className="text-lg font-bold italic font-serif uppercase flex-1 text-center">{recipientName}</span>
                                   </div>
-                                </td>
-                              </tr>
-                              <tr className="border-t border-black/20">
-                                <td className="border-r border-black p-1 uppercase">JASA MOBIL</td>
-                                <td className="border-r border-black p-1"></td>
-                                <td className="border-r border-black p-1"></td>
-                                <td className="p-1 text-right pr-4">
-                                  <div className="flex justify-end px-1">
-                                    <span>{jasaMobil > 0 ? formatCurrency(jasaMobil) : '-'}</span>
-                                  </div>
-                                </td>
-                              </tr>
-                              <tr className="border-t border-black/20">
-                                <td className="border-r border-black p-1 uppercase">PINJAMAN PRIBADI</td>
-                                <td className="border-r border-black p-1"></td>
-                                <td className="border-r border-black p-1"></td>
-                                <td className="p-1 text-right pr-4">
-                                  <div className="flex justify-end px-1">
-                                    <span>{pinjamanPribadi > 0 ? formatCurrency(pinjamanPribadi) : '-'}</span>
-                                  </div>
-                                </td>
-                              </tr>
-                              <tr className="border-t border-black/20">
-                                <td className="border-r border-black p-1 uppercase">CAHS /DP</td>
-                                <td className="border-r border-black p-1"></td>
-                                <td className="border-r border-black p-1"></td>
-                                <td className="p-1 text-right pr-4">
-                                  <div className="flex justify-end px-1">
-                                    <span>{cashDp > 0 ? formatCurrency(cashDp) : '-'}</span>
-                                  </div>
-                                </td>
-                              </tr>
-                              <tr className="border-t border-black/20">
-                                <td className="border-r border-black p-1 uppercase">Potongan {settings.potonganPercentage}%</td>
-                                <td className="border-r border-black p-1"></td>
-                                <td className="border-r border-black p-1"></td>
-                                <td className="p-1 text-right pr-4">
-                                  <div className="flex justify-end px-1">
-                                    <span>{formatCurrency(totals.potongan)}</span>
-                                  </div>
-                                </td>
-                              </tr>
-                              <tr className="border-t border-black font-bold bg-black/5">
-                                <td className="border-r border-black p-1 uppercase">TOTAL BERSIH</td>
-                                <td className="border-r border-black p-1"></td>
-                                <td className="border-r border-black p-1"></td>
-                                <td className="p-1 text-right pr-4">
-                                  <div className="flex justify-end px-1">
-                                    <span>{formatCurrency(totals.totalBersih)}</span>
-                                  </div>
-                                </td>
-                              </tr>
-                            </tbody>
-                          </table>
+                                </div>
+                              </div>
+
+                              {/* Table */}
+                              <table className="w-full border-collapse text-xs">
+                                <thead>
+                                  <tr className="border-b border-black">
+                                    <th className="border-r border-black p-1 font-bold w-8">No.</th>
+                                    <th className="border-r border-black p-1 font-bold">Jenis Kegiatan</th>
+                                    <th className="border-r border-black p-1 font-bold w-24">Tanggal</th>
+                                    <th className="border-r border-black p-1 font-bold w-28">Harga Rp / kg</th>
+                                    <th className="border-r border-black p-1 font-bold w-24">Ton / Kg</th>
+                                    <th className="p-1 font-bold text-right pr-4">Total</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {entries.map((entry, idx) => (
+                                    <tr key={entry.id} className="border-b border-black/20">
+                                      <td className="border-r border-black p-1 text-center align-top">{idx === 0 ? '1' : ''}</td>
+                                      <td className="border-r border-black p-1 align-top">{idx === 0 ? 'Tandan Buah Segar (TBS)' : ''}</td>
+                                      <td className="border-r border-black p-1 text-center">{format(new Date(entry.date), 'dd/MM/yyyy')}</td>
+                                      <td className="border-r border-black p-1">
+                                        <div className="flex justify-end px-1">
+                                          <span>{formatCurrency(entry.pricePerKg)}</span>
+                                        </div>
+                                      </td>
+                                      <td className="border-r border-black p-1 text-center">{formatWeight(entry.weight)}</td>
+                                      <td className="p-1 text-right pr-4">
+                                        <div className="flex justify-end px-1">
+                                          <span>{formatCurrency(entry.pricePerKg * (entry.weight * 1000))}</span>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  ))}
+                                  
+                                  {/* Summary Rows */}
+                                  <tr className="border-t border-black font-bold">
+                                    <td colSpan={2} rowSpan={6} className="border-r border-black p-4 align-bottom text-center">
+                                      <div className="mb-12">Pembeli TBS</div>
+                                      <div className="underline font-bold">{buyerName}</div>
+                                    </td>
+                                    <td className="border-r border-black p-1 text-center uppercase">SUB TOTAL</td>
+                                    <td className="border-r border-black p-1"></td>
+                                    <td className="border-r border-black p-1 text-center">{formatWeight(totals.totalWeight)}</td>
+                                    <td className="p-1 text-right pr-4">
+                                      <div className="flex justify-end px-1">
+                                        <span>{formatCurrency(totals.subTotal)}</span>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                  <tr className="border-t border-black/20">
+                                    <td className="border-r border-black p-1 uppercase">JASA MOBIL</td>
+                                    <td className="border-r border-black p-1"></td>
+                                    <td className="border-r border-black p-1"></td>
+                                    <td className="p-1 text-right pr-4">
+                                      <div className="flex justify-end px-1">
+                                        <span>{jasaMobil > 0 ? formatCurrency(jasaMobil) : '-'}</span>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                  <tr className="border-t border-black/20">
+                                    <td className="border-r border-black p-1 uppercase">PINJAMAN PRIBADI</td>
+                                    <td className="border-r border-black p-1"></td>
+                                    <td className="border-r border-black p-1"></td>
+                                    <td className="p-1 text-right pr-4">
+                                      <div className="flex justify-end px-1">
+                                        <span>{pinjamanPribadi > 0 ? formatCurrency(pinjamanPribadi) : '-'}</span>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                  <tr className="border-t border-black/20">
+                                    <td className="border-r border-black p-1 uppercase">CAHS /DP</td>
+                                    <td className="border-r border-black p-1"></td>
+                                    <td className="border-r border-black p-1"></td>
+                                    <td className="p-1 text-right pr-4">
+                                      <div className="flex justify-end px-1">
+                                        <span>{cashDp > 0 ? formatCurrency(cashDp) : '-'}</span>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                  <tr className="border-t border-black/20">
+                                    <td className="border-r border-black p-1 uppercase">Potongan {settings.potonganPercentage}%</td>
+                                    <td className="border-r border-black p-1"></td>
+                                    <td className="border-r border-black p-1"></td>
+                                    <td className="p-1 text-right pr-4">
+                                      <div className="flex justify-end px-1">
+                                        <span>{formatCurrency(totals.potongan)}</span>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                  <tr className="border-t border-black font-bold bg-black/5">
+                                    <td className="border-r border-black p-1 uppercase">TOTAL BERSIH</td>
+                                    <td className="border-r border-black p-1"></td>
+                                    <td className="border-r border-black p-1"></td>
+                                    <td className="p-1 text-right pr-4">
+                                      <div className="flex justify-end px-1">
+                                        <span>{formatCurrency(totals.totalBersih)}</span>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     </motion.div>
@@ -1079,11 +1111,19 @@ export default function App() {
           }
           #slip-preview {
             box-shadow: none !important;
-            border-width: 1px !important;
             width: 100% !important;
             max-width: none !important;
             margin: 0 !important;
             transform: none !important;
+            background: transparent !important;
+          }
+          #slip-preview > div {
+            border-width: 1px !important;
+            margin-bottom: 1cm !important;
+            page-break-inside: avoid;
+          }
+          #slip-preview > div:last-child {
+            margin-bottom: 0 !important;
           }
           @page {
             margin: 0.5cm;
