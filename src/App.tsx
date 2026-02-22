@@ -53,9 +53,12 @@ interface AppSettings {
   defaultBuyerName: string;
   potonganPercentage: number;
   accentColor: string;
-  backgroundStyle: 'dots' | 'grid' | 'clean' | 'gradient';
+  backgroundStyle: 'dots' | 'grid' | 'clean' | 'gradient' | 'image';
   slipHeader: string;
+  slipAddress: string;
+  slipPhone: string;
   logoUrl: string | null;
+  backgroundImageUrl: string | null;
 }
 
 export default function App() {
@@ -67,7 +70,10 @@ export default function App() {
     accentColor: '#059669', // emerald-600
     backgroundStyle: 'dots',
     slipHeader: 'SLIP PEMBELIAN TANDAN BUAH SEGAR',
-    logoUrl: null
+    slipAddress: '',
+    slipPhone: '',
+    logoUrl: null,
+    backgroundImageUrl: null
   });
   
   const [recipientName, setRecipientName] = useState(settings.defaultRecipientName);
@@ -124,6 +130,17 @@ export default function App() {
       const reader = new FileReader();
       reader.onloadend = () => {
         updateSettings({ ...settings, logoUrl: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleBackgroundUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        updateSettings({ ...settings, backgroundImageUrl: reader.result as string, backgroundStyle: 'image' });
       };
       reader.readAsDataURL(file);
     }
@@ -293,12 +310,21 @@ export default function App() {
         {settings.backgroundStyle === 'gradient' && (
           <div className="absolute inset-0 bg-gradient-to-br from-white via-slate-50/50 to-slate-100/30 pointer-events-none" />
         )}
+        {settings.backgroundStyle === 'image' && settings.backgroundImageUrl && (
+          <div 
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-20 pointer-events-none" 
+            style={{ backgroundImage: `url(${settings.backgroundImageUrl})` }}
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-br from-white via-transparent to-transparent pointer-events-none" />
 
         {/* Header */}
         <header className="h-16 bg-white/80 backdrop-blur-md border-b border-slate-200/60 flex items-center justify-between px-6 sticky top-0 z-30">
           <div className="flex items-center gap-4 lg:hidden">
-             <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center text-white">
+             <div 
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-white"
+              style={{ backgroundColor: 'var(--accent-color)' }}
+             >
               <Scale size={18} />
             </div>
             <span className="font-bold">TBS Pro</span>
@@ -306,7 +332,7 @@ export default function App() {
           
           <div className="hidden lg:block">
             <h1 className="text-sm font-medium text-slate-500">
-              {showHistory ? 'Riwayat Slip' : 'Buat Slip Baru'}
+              {showHistory ? 'Riwayat Slip' : showSettings ? 'Pengaturan Aplikasi' : 'Input Data TBS'}
             </h1>
           </div>
 
@@ -393,6 +419,26 @@ export default function App() {
                         value={settings.slipHeader}
                         onChange={(e) => updateSettings({ ...settings, slipHeader: e.target.value })}
                         className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-500 uppercase">Alamat (Kop)</label>
+                      <input 
+                        type="text" 
+                        value={settings.slipAddress}
+                        onChange={(e) => updateSettings({ ...settings, slipAddress: e.target.value })}
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+                        placeholder="Contoh: Jl. Raya Lintas Sumatera..."
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-500 uppercase">Telepon / HP (Kop)</label>
+                      <input 
+                        type="text" 
+                        value={settings.slipPhone}
+                        onChange={(e) => updateSettings({ ...settings, slipPhone: e.target.value })}
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+                        placeholder="Contoh: 0812-3456-7890"
                       />
                     </div>
                     <div className="space-y-2">
@@ -488,6 +534,7 @@ export default function App() {
                           { id: 'grid', label: 'Kotak-kotak' },
                           { id: 'gradient', label: 'Gradasi' },
                           { id: 'clean', label: 'Polos' },
+                          { id: 'image', label: 'Gambar Kustom' },
                         ].map((style) => (
                           <button
                             key={style.id}
@@ -503,6 +550,35 @@ export default function App() {
                           </button>
                         ))}
                       </div>
+
+                      {settings.backgroundStyle === 'image' && (
+                        <div className="mt-4 space-y-3">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase">Upload Background (PNG/JPG)</label>
+                          <div className="flex items-center gap-4">
+                            {settings.backgroundImageUrl ? (
+                              <div className="relative group">
+                                <img src={settings.backgroundImageUrl} alt="BG" className="w-20 h-12 object-cover border border-slate-200 rounded-lg" />
+                                <button 
+                                  onClick={() => updateSettings({ ...settings, backgroundImageUrl: null, backgroundStyle: 'dots' })}
+                                  className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                  <X size={12} />
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="w-20 h-12 border-2 border-dashed border-slate-200 rounded-lg flex items-center justify-center text-slate-300">
+                                <FileText size={16} />
+                              </div>
+                            )}
+                            <label className="flex-1">
+                              <div className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-500 text-center cursor-pointer hover:bg-slate-100 transition-all">
+                                Pilih Gambar
+                              </div>
+                              <input type="file" accept="image/*" onChange={handleBackgroundUpload} className="hidden" />
+                            </label>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </section>
@@ -798,10 +874,17 @@ export default function App() {
                           {/* Header */}
                           <div className="border-b border-black flex items-center px-4 py-2 gap-4">
                             {settings.logoUrl && (
-                              <img src={settings.logoUrl} alt="Logo" className="w-12 h-12 object-contain" />
+                              <img src={settings.logoUrl} alt="Logo" className="w-16 h-16 object-contain" />
                             )}
-                            <div className="flex-1 text-center font-serif text-xl tracking-widest uppercase font-bold">
-                              {settings.slipHeader}
+                            <div className="flex-1 text-center">
+                              <div className="font-serif text-xl tracking-widest uppercase font-bold">
+                                {settings.slipHeader}
+                              </div>
+                              {(settings.slipAddress || settings.slipPhone) && (
+                                <div className="text-[10px] mt-1 font-medium">
+                                  {settings.slipAddress} {settings.slipPhone && `| Telp: ${settings.slipPhone}`}
+                                </div>
+                              )}
                             </div>
                           </div>
                           
